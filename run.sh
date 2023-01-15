@@ -1,11 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
+# replace with your terminal
+term_exec=kitty
 
-nvr_exec= $HOME/.local/bin/nvr
+server_path=$HOME/.cache/nvim/com.unity.server.pipe
 
-if [[ -n `$nvr_exec --serverlist | grep unity` ]]; then
-    $nvr_exec --servername unity --remote-silent $@
-else
-    # Replace `tilix -e` with your terminal
-    tilix -e ${nvr_exec} --servername unity --remote-silent $@
+if ! [ -e $server_path ]; then
+    # start the server if its pipe doesn't exist
+    $term_exec nvim --listen $server_path $1
 fi
+
+# open file in server
+$term_exec nvim --server $server_path --remote-send "<C-\><C-n>:n $1<CR>:call cursor($2)<CR>"

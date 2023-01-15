@@ -24,6 +24,7 @@ namespace Packages.Neovim.Editor
 
         static NeovimScriptEditor()
 		{
+		    CodeEditor.Register(new NeovimScriptEditor());
 			NeovimScriptEditor.projectGeneration = new ProjectGeneration.ProjectGeneration();
 
             launcherPath = Path.GetFullPath(Path.Combine("Packages", PackageName, NeovimLauncher));
@@ -95,9 +96,14 @@ namespace Packages.Neovim.Editor
 
 		public bool OpenProject(string path, int line, int column)
 		{
+		    if (!CheckShouldBeOpenedInEditor(path))
+		    {
+                return false;
+		    }
+
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
-              Arguments = $"\"+normal {line}G{column}|\" {path}",
+              Arguments = $"{path} {line},{column}",
               FileName = launcherPath,
               UseShellExecute = false,
               RedirectStandardOutput = true,
@@ -110,8 +116,24 @@ namespace Packages.Neovim.Editor
 
         public bool TryGetInstallationForPath(string editorPath, out CodeEditor.Installation installation)
 		{
+		    installation = default;
+		    if (Installations == null || Installations.Length == 0)
+		    {
+                return false;
+		    }
+
             installation = Installations.FirstOrDefault(install => install.Path == editorPath);
             return !string.IsNullOrEmpty(installation.Name);
+		}
+
+		private bool CheckShouldBeOpenedInEditor(string path)
+		{
+		    ProjectGeneration.ProjectGeneration localProjectGeneration = (ProjectGeneration.ProjectGeneration) projectGeneration;
+		    if (string.IsNullOrEmpty(path) || !localProjectGeneration.HasValidExtension(path))
+		    {
+                return false;
+		    }
+            return true;
 		}
 	}
 }
